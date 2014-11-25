@@ -66,7 +66,7 @@ trait ExecutableQuery[T <: CassandraTable[T, _], R] extends ExecutableStatement 
   private[query] def enumerate()(implicit session: Session, ctx: ExecutionContext): TwitterFuture[PlayEnumerator[R]] = {
     execute() map {
       resultSet => {
-        Enumerator.enumerator(resultSet) through Enumeratee.map(r => fromRow(r))
+        Enumerator.unfold(resultSet) through Enumeratee.map(r => fromRow(r))
       }
     }
   }

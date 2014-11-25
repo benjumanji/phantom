@@ -19,28 +19,66 @@ import java.util.{ ArrayDeque => JavaArrayDeque, Deque => JavaDeque }
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.collection.JavaConversions._
 import com.datastax.driver.core.{ ResultSet, Row }
-import play.api.libs.iteratee.{ Enumerator => PlayEnum }
+import play.api.libs.iteratee.{
+  Enumerator => PlayEnum,
+  Iteratee => PlayIter,
+  Input,
+  Step,
+  Cont,
+  Done,
+  Error
+}
 
 
 object Enumerator {
   private[this] def enumerate[E](it: Iterator[E])(implicit ctx: scala.concurrent.ExecutionContext): PlayEnum[E] = {
-    PlayEnum.unfoldM[scala.collection.Iterator[E], E](it: scala.collection.Iterator[E])({ currentIt =>
+    PlayEnum.unfold[scala.collection.Iterator[E], E](it: scala.collection.Iterator[E])({ currentIt =>
       if (currentIt.hasNext) {
-        Future[Option[(scala.collection.Iterator[E], E)]]({
-          val next = currentIt.next()
-          Some(currentIt -> next)
-        })(ctx)
+        val next = currentIt.next()
+        Some(currentIt -> next)
       }
       else {
-        Future.successful[Option[(scala.collection.Iterator[E], E)]]({
-          None
-        })
+        None
       }
-    })(Execution.defaultExecutionContext)
+    })
   }
 
   def enumerator(r: ResultSet)(implicit ctx: scala.concurrent.ExecutionContext): PlayEnum[Row] =
     enumerate[Row](r.iterator())
+
+  def unfold(resultSet: ResultSet)(implicit ctx: scala.concurrent.ExecutionContext): PlayEnum[Row] = {
+
+    new PlayEnum[Row] {
+
+      val rs = resultSet
+      val it = rs.iterator
+
+      def apply[A](iter: PlayIter[Row, A]): Future[PlayIter[Row, A]] = {
+        iter.fold {
+          case Step.Cont(k) => fetch[A](k)
+          case Step.Done(a, e) => Future.successful(Done(a, e))
+          case Step.Error(msg, inp) => Future.successful(Error(msg, inp))
+        }
+      }
+
+      def fetch[A](k: Input[Row] => PlayIter[Row, A]): Future[PlayIter[Row, A]] = {
+
+        val available = resultSet.getAvailableWithoutFetching
+
+        if (!rs.isExhausted) {
+          // prefetch if we are running low on results.
+          if (available < 100 && !resultSet.isFullyFetched)
+            rs.fetchMoreResults
+          if (available < 1)
+            Future(it.next).map(row => k(Input.El(row)))
+          else
+            Future.successful(k(Input.El(it.next)))
+        } else {
+          Future.successful(Cont(k))
+        }
+      }
+    }
+  }
 }
 
 /**
