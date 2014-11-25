@@ -15,50 +15,50 @@ object phantom extends Build {
   val thriftVersion = "0.9.1"
   val scalatraVersion = "2.2.2"
 
-  val publishUrl = "http://maven.websudos.co.uk"
+  val publishUrl = "http://artifactory.sphoniclabs.net:8081/artifactory/"
 
-  val mavenPublishSettings : Seq[Def.Setting[_]] = Seq(
-    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
-    publishMavenStyle := true,
-    publishTo <<= version.apply {
-      v =>
-        val nexus = "https://oss.sonatype.org/"
-        if (v.trim.endsWith("SNAPSHOT"))
-          Some("snapshots" at nexus + "content/repositories/snapshots")
-        else
-          Some("releases" at nexus + "service/local/staging/deploy/maven2")
-    },
-    publishArtifact in Test := false,
-    pomIncludeRepository := { _ => true },
-    pomExtra :=
-      <url>https://github.com/websudosuk/phantom</url>
-        <licenses>
-          <license>
-            <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-            <distribution>repo</distribution>
-          </license>
-        </licenses>
-        <scm>
-          <url>git@github.com:websudosuk/phantom.git</url>
-          <connection>scm:git:git@github.com:websudosuk/phantom.git</connection>
-        </scm>
-        <developers>
-          <developer>
-            <id>creyer</id>
-            <name>Sorin Chiprian</name>
-            <url>http://github.com/creyer</url>
-          </developer>
-          <developer>
-            <id>alexflav</id>
-            <name>Flavian Alexandru</name>
-            <url>http://github.com/alexflav23</url>
-          </developer>
-        </developers>
-  )
+  // val mavenPublishSettings : Seq[Def.Setting[_]] = Seq(
+  //   credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+  //   publishMavenStyle := true,
+  //   publishTo <<= version.apply {
+  //     v =>
+  //       val nexus = "https://oss.sonatype.org/"
+  //       if (v.trim.endsWith("SNAPSHOT"))
+  //         Some("snapshots" at nexus + "content/repositories/snapshots")
+  //       else
+  //         Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  //   },
+  //   publishArtifact in Test := false,
+  //   pomIncludeRepository := { _ => true },
+  //   pomExtra :=
+  //     <url>https://github.com/websudosuk/phantom</url>
+  //       <licenses>
+  //         <license>
+  //           <name>Apache License, Version 2.0</name>
+  //           <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+  //           <distribution>repo</distribution>
+  //         </license>
+  //       </licenses>
+  //       <scm>
+  //         <url>git@github.com:websudosuk/phantom.git</url>
+  //         <connection>scm:git:git@github.com:websudosuk/phantom.git</connection>
+  //       </scm>
+  //       <developers>
+  //         <developer>
+  //           <id>creyer</id>
+  //           <name>Sorin Chiprian</name>
+  //           <url>http://github.com/creyer</url>
+  //         </developer>
+  //         <developer>
+  //           <id>alexflav</id>
+  //           <name>Flavian Alexandru</name>
+  //           <url>http://github.com/alexflav23</url>
+  //         </developer>
+  //       </developers>
+  // )
 
   val publishSettings : Seq[Def.Setting[_]] = Seq(
-    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+    credentials += Credentials(Path.userHome / ".ivy2" / ".sphonic_credentials"),
     publishTo <<= version { (v: String) => {
         if (v.trim.endsWith("SNAPSHOT"))
           Some("snapshots" at publishUrl + "/ext-snapshot-local")
@@ -73,7 +73,7 @@ object phantom extends Build {
 
   val sharedSettings: Seq[Def.Setting[_]] = Seq(
     organization := "com.websudos",
-    version := "1.2.2",
+    version := "1.2.2.1",
     scalaVersion := "2.10.4",
     resolvers ++= Seq(
       "Typesafe repository snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",

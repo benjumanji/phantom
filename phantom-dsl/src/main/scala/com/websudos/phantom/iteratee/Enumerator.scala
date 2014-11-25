@@ -65,7 +65,7 @@ private object Execution {
    * Also, since we're running on a single thread, blocking code risks deadlock.
    */
   val trampoline: ExecutionContext = new ExecutionContext {
-
+    private[this] val cores = Runtime.getRuntime.availableProcessors()
     private[this] val local = new ThreadLocal[JavaDeque[Runnable]]
 
     def execute(runnable: Runnable): Unit = {
@@ -74,7 +74,7 @@ private object Execution {
         // Since there is no local queue, we need to install one and
         // start our trampolining loop.
         try {
-          queue = new JavaArrayDeque(Runtime.getRuntime.availableProcessors())
+          queue = new JavaArrayDeque(cores)
           queue.addLast(runnable)
           local.set(queue)
           while (!queue.isEmpty) {
